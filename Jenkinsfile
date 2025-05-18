@@ -3,22 +3,42 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/adityavshinde/MemeOps.git'
+                // Corrected the git syntax
+                git branch: 'dev', url: 'https://github.com/adityavshinde/MemeOps.git'
             }
         }
         stage('Install Dependencies') {
             steps {
-                sh 'pip install -r requirements.txt'
+                // Ensure that Python and pip are available
+                sh '''
+                which python || echo "Python not found!"
+                which pip || echo "Pip not found!"
+                pip install -r requirements.txt
+                '''
             }
         }
         stage('Run Tests') {
             steps {
-                sh 'pytest'
+                // Run tests using pytest
+                sh '''
+                if [ -f requirements.txt ]; then
+                    pip install -r requirements.txt
+                fi
+                pytest
+                '''
             }
         }
         stage('Build') {
             steps {
-                sh 'python app.py'
+                // Run the application
+                sh '''
+                if [ -f app.py ]; then
+                    python app.py
+                else
+                    echo "app.py not found!"
+                    exit 1
+                fi
+                '''
             }
         }
     }
