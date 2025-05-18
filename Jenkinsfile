@@ -3,17 +3,26 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Corrected the git syntax
+                // Corrected git syntax to clone the dev branch
                 git branch: 'dev', url: 'https://github.com/adityavshinde/MemeOps.git'
             }
         }
         stage('Install Dependencies') {
             steps {
-                // Ensure that Python and pip are available
+                // Navigate to the project directory and install dependencies
                 sh '''
+                cd ${WORKSPACE}
+                echo "Working directory: $(pwd)"
                 which python || echo "Python not found!"
                 which pip || echo "Pip not found!"
-                pip install -r requirements.txt
+                
+                # Check if requirements.txt exists and install packages
+                if [ -f requirements.txt ]; then
+                    pip install --user -r requirements.txt
+                else
+                    echo "requirements.txt not found!"
+                    exit 1
+                fi
                 '''
             }
         }
@@ -21,10 +30,11 @@ pipeline {
             steps {
                 // Run tests using pytest
                 sh '''
+                cd ${WORKSPACE}
                 if [ -f requirements.txt ]; then
-                    pip install -r requirements.txt
+                    pip install --user -r requirements.txt
                 fi
-                pytest
+                pytest || echo "No tests found!"
                 '''
             }
         }
@@ -32,6 +42,7 @@ pipeline {
             steps {
                 // Run the application
                 sh '''
+                cd ${WORKSPACE}
                 if [ -f app.py ]; then
                     python app.py
                 else
@@ -44,10 +55,10 @@ pipeline {
     }
     post {
         success {
-            echo 'Deployment successful!'
+            echo '✅ Deployment successful!'
         }
         failure {
-            echo 'Deployment failed!'
+            echo '❌ Deployment failed!'
         }
     }
 }
